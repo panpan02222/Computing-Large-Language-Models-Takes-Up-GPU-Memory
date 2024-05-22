@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Memory Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>大语言模型显存计算器</h1>
+
+    <form id="memory-form">
+      <label for="dataType">参数类型:</label>
+      <select id="dataType" name="dataType">
+        <option value="FP32">FP32</option>
+        <option value="FP16">FP16</option>
+        <option value="BF16">BF16</option>
+        <option value="INT16">INT16</option>
+        <option value="INT8">INT8</option>
+      </select>
+
+      <label for="params">模型参数量(亿):</label>
+      <input type="number" id="params" name="params" min="0">
+      <br>
+      <button type="button" id="calculate-button">开始计算</button>
+    </form>
+
+    <div id="memory-result">
+      <p><b>预估显存使用量: </b><span id="memory-value">0</span> </p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
