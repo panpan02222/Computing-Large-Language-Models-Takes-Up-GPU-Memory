@@ -7,3 +7,5 @@
 - [LLM结构对比](https://zhuanlan.zhihu.com/p/644815089)
 
 - [Sequence Parallel](https://zhuanlan.zhihu.com/p/626553071)
+
+- [大模型显存计算公式与优化](https://zhuanlan.zhihu.com/p/687226668)

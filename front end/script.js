@@ -18,28 +18,28 @@ function getSelectedValues() {
       sp_num: null
   };
   
-  // 检查Tensor并行是否选中
+  // 检查 Tensor 并行是否选中
   if (document.getElementById('tp').checked) {
-      console.log("Tensor并行选中");
+      console.log("Tensor 并行选中");
       selectedValues.tp_num = parseInt(document.getElementById('tp-num').value);
   }
 
-  // 检查Sequence并行是否选中
+  // 检查 Sequence 并行是否选中
   if (document.getElementById('sp').checked) {
-      console.log("Sequence并行选中");
-      selectedValues.sp_num = parseInt(document.getElementById('sp-num').value);
+      console.log("Sequence 并行选中");
+      selectedValues.sp_num = selectedValues.tp_num;
+  } else {
+      selectedValues.sp_num = 0;
   }
 
-  // 检查Pipeline并行是否选中
+  // 检查 Pipeline 并行是否选中
   if (document.getElementById('pp').checked) {
-      console.log("Pipeline并行选中");
+      console.log("Pipeline 并行选中");
       selectedValues.pp_num = parseInt(document.getElementById('pp-num').value);
   }
 
   return selectedValues;
 }
-
-
 
 
 
@@ -124,12 +124,54 @@ function getGradientValue(typesize, params) {
   return gradientValue;
 }
 
+// 无重计算无并行
 function getActivateValue(s,b,h,a,L) {
   let activationValue = 0;
   let lambda = 1/(1024*1024*1024);
   activationValue = s * b * h *(34 + 5 *a * s/h) * L * lambda;
   return activationValue;
 }
+
+// Tensor并行 + 序列并行
+function getActivateValue(s,b,h,a,L,t) {
+  let activationValue = 0;
+  let lambda = 1/(1024*1024*1024);
+  activationValue = s * b * h *(34 + 5 *a * s/h)/t * L * lambda;
+  return activationValue;
+}
+
+// Tensor并行（基线）
+function getActivateValue_0(s,b,h,a,L,t) {
+  let activationValue = 0;
+  let lambda = 1/(1024*1024*1024);
+  activationValue = s * b * h *(10 + 24/t + 5 * a * s/h) * L * lambda;
+  return activationValue;
+}
+
+// 选择重计算 + Tensor并行
+function getActivateValue_0(s,b,h,a,L,t) {
+  let activationValue = 0;
+  let lambda = 1/(1024*1024*1024);
+  activationValue = s * b * h *(10 + 24/t) * L * lambda;
+  return activationValue;
+}
+
+// 选择冲计算 + Tensor并行 + 序列并行
+function getActivateValue(s,b,h,a,L,t) {
+  let activationValue = 0;
+  let lambda = 1/(1024*1024*1024);
+  activationValue = s * b * h *(34/t) * L * lambda;
+  return activationValue;
+}
+
+// 全部重计算
+function getActivateValue(s,b,h,L) {
+  let activationValue = 0;
+  let lambda = 1/(1024*1024*1024);
+  activationValue = s * b * h *(2) * L * lambda;
+  return activationValue;
+}
+
 
 function calculateMemory(modelMemory, optimizerState, gradientValue, activationValue, tp_num, sp_num, pp_num) {
   const modelMemoryGB = modelMemory / (1024 * 1024 * 1024); // 转换为GB
