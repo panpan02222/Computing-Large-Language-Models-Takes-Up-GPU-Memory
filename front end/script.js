@@ -13,42 +13,45 @@ const transformerLayersInput = document.getElementById('transformer-layers');
 // 获取选中的复选框的值并存储在常量中
 function getSelectedValues() {
   const selectedValues = {
-      tp_num: null,
-      pp_num: null,
-      sp_num: null
+    tp_num: null,
+    pp_num: null,
+    sp_selected: false,
+    cjs_selected: false
   };
-  
-  // 检查 Tensor 并行是否选中
+
   if (document.getElementById('tp').checked) {
-      console.log("Tensor 并行选中");
-      selectedValues.tp_num = parseInt(document.getElementById('tp-num').value);
+    console.log("Tensor 并行选中");
+    selectedValues.tp_num = parseInt(document.getElementById('tp-num').value);
   }
 
-  // 检查 Sequence 并行是否选中
   if (document.getElementById('sp').checked) {
-      console.log("Sequence 并行选中");
-      selectedValues.sp_num = selectedValues.tp_num;
-  } else {
-      selectedValues.sp_num = 0;
+    console.log("Sequence 并行选中");
+    selectedValues.sp_selected = true;
   }
 
-  // 检查 Pipeline 并行是否选中
   if (document.getElementById('pp').checked) {
-      console.log("Pipeline 并行选中");
-      selectedValues.pp_num = parseInt(document.getElementById('pp-num').value);
+    console.log("Pipeline 并行选中");
+    selectedValues.pp_num = parseInt(document.getElementById('pp-num').value);
+  }
+
+  if (document.getElementById('chongjisuan').checked) {
+    console.log("重计算选中");
+    selectedValues.cjs_selected = true;
   }
 
   return selectedValues;
 }
 
 
-
 const memoryValue = document.getElementById('memory-value');
 
 calculateButton.addEventListener('click', function() {
-  // 用法示例
-  const { tp_num, pp_num, sp_num } = getSelectedValues();
-  console.log(tp_num, pp_num, sp_num);
+  // 获取选中的训练方法及其参数
+  const selectedValues = getSelectedValues();
+  const { tp_num, pp_num, sp_selected, cjs_selected } = selectedValues;
+
+  console.log(tp_num, pp_num, sp_selected, cjs_selected);
+
   const dataType = dataTypeSelect.value;
   const paramsInBillions = parseFloat(paramsInput.value);
   const optimizer = optimizerSelect.value;
@@ -64,7 +67,7 @@ calculateButton.addEventListener('click', function() {
   }
 
   // 模型参数量
-  const params = paramsInBillions * 1e9; // Convert billions to parameters
+  const params = paramsInBillions * 1e9; // 将十亿转换为参数数量
   // 模型精度
   const typesize = getDataTypeSize(dataType);
 
@@ -74,13 +77,47 @@ calculateButton.addEventListener('click', function() {
   // 梯度值
   const gradientValue = getGradientValue(typesize, params);
   // 激活值
-  const activationValue = getActivateValue(sequenceLength, batchSize, hiddenSize, attentionHeads, transformerLayers);
+  const activationValue = getActivateValue(sequenceLength, batchSize, hiddenSize, attentionHeads, transformerLayers, selectedValues);
 
-  // 计算函数
-  const memoryUsage = calculateMemory(modelMemory, gradientValue, optimizerState, activationValue, tp_num, sp_num, pp_num);
-  // Update memory value display with formatting
+  // 计算内存使用量
+  const memoryUsage = calculateMemory(modelMemory, gradientValue, optimizerState, activationValue, tp_num, sp_selected, pp_num);
+
+  // 使用格式化更新内存值显示
   memoryValue.textContent = formatMemory(memoryUsage);
 });
+
+// 修改后的 getActivateValue 函数定义
+function getActivateValue(s, b, h, a, L, trainingMethods) {
+  let activationValue = 0;
+  let lambda = 1 / (1024 * 1024 * 1024);
+
+  if (trainingMethods.cjs_selected) {
+    if (trainingMethods.tp_num && trainingMethods.sp_selected) {
+      console.log("选择重计算 + Tensor并行 + 序列并行");
+      activationValue = s * b * h * (34 / trainingMethods.tp_num) * L * lambda;
+    } else if (trainingMethods.tp_num) {
+      console.log("选择重计算 + Tensor并行");
+      activationValue = s * b * h * (10 + 24 / trainingMethods.tp_num) * L * lambda;
+    } else {
+      console.log("全部重计算");
+      activationValue = s * b * h * 2 * L * lambda;
+    }
+  } else {
+    if (trainingMethods.tp_num && trainingMethods.sp_selected) {
+      console.log("Tensor并行 + 序列并行");
+      activationValue = s * b * h * (34 + 5 * a * s / h) / trainingMethods.tp_num * L * lambda;
+    } else if (trainingMethods.tp_num) {
+      console.log("Tensor并行（基线）");
+      activationValue = s * b * h * (10 + 24 / trainingMethods.tp_num + 5 * a * s / h) * L * lambda;
+    } else {
+      console.log("无重计算无并行");
+      activationValue = s * b * h * (34 + 5 * a * s / h) * L * lambda;
+    }
+  }
+
+  return activationValue;
+}
+
 
 function getDataTypeSize(dataType) {
   switch (dataType) {
@@ -118,59 +155,94 @@ function getOptimizerState(optimizer, params) {
   return additionalMemoryPerParam;
 }
 
+
+
 function getGradientValue(typesize, params) {
   let gradientValue = 0;
   gradientValue = typesize * params;
   return gradientValue;
 }
+// 激活值计算
+// function getActivateValue(s, b, h, a, L, trainingMethods) {
+//   let activationValue = 0;
+//   let lambda = 1 / (1024 * 1024 * 1024);
 
-// 无重计算无并行
-function getActivateValue(s,b,h,a,L) {
-  let activationValue = 0;
-  let lambda = 1/(1024*1024*1024);
-  activationValue = s * b * h *(34 + 5 *a * s/h) * L * lambda;
-  return activationValue;
-}
+//   if (trainingMethods.cjs_selected) {
+//     if (trainingMethods.tp_num && trainingMethods.sp_selected) {
+//       console.log("选择重计算 + Tensor并行 + 序列并行");
+//       activationValue = s * b * h * (34 / trainingMethods.tp_num) * L * lambda;
+//     } else if (trainingMethods.tp_num) {
+//       console.log("选择重计算 + Tensor并行");
+//       activationValue = s * b * h * (10 + 24 / trainingMethods.tp_num) * L * lambda;
+//     } else {
+//       console.log("全部重计算");
+//       activationValue = s * b * h * 2 * L * lambda;
+//     }
+//   } else {
+//     if (trainingMethods.tp_num && trainingMethods.sp_selected) {
+//       console.log("Tensor并行 + 序列并行");
+//       activationValue = s * b * h * (34 + 5 * a * s / h) / trainingMethods.tp_num * L * lambda;
+//     } else if (trainingMethods.tp_num) {
+//       console.log("Tensor并行（基线）");
+//       activationValue = s * b * h * (10 + 24 / trainingMethods.tp_num + 5 * a * s / h) * L * lambda;
+//     } else {
+//       console.log("无重计算无并行");
+//       activationValue = s * b * h * (34 + 5 * a * s / h) * L * lambda;
+//     }
+//   }
 
-// Tensor并行 + 序列并行
-function getActivateValue(s,b,h,a,L,t) {
-  let activationValue = 0;
-  let lambda = 1/(1024*1024*1024);
-  activationValue = s * b * h *(34 + 5 *a * s/h)/t * L * lambda;
-  return activationValue;
-}
+//   return activationValue;
+// }
 
-// Tensor并行（基线）
-function getActivateValue_0(s,b,h,a,L,t) {
-  let activationValue = 0;
-  let lambda = 1/(1024*1024*1024);
-  activationValue = s * b * h *(10 + 24/t + 5 * a * s/h) * L * lambda;
-  return activationValue;
-}
 
-// 选择重计算 + Tensor并行
-function getActivateValue_0(s,b,h,a,L,t) {
-  let activationValue = 0;
-  let lambda = 1/(1024*1024*1024);
-  activationValue = s * b * h *(10 + 24/t) * L * lambda;
-  return activationValue;
-}
 
-// 选择冲计算 + Tensor并行 + 序列并行
-function getActivateValue(s,b,h,a,L,t) {
-  let activationValue = 0;
-  let lambda = 1/(1024*1024*1024);
-  activationValue = s * b * h *(34/t) * L * lambda;
-  return activationValue;
-}
+// // 无重计算无并行
+// function getActivateValue(s,b,h,a,L) {
+//   let activationValue = 0;
+//   let lambda = 1/(1024*1024*1024);
+//   activationValue = s * b * h *(34 + 5 *a * s/h) * L * lambda;
+//   return activationValue;
+// }
 
-// 全部重计算
-function getActivateValue(s,b,h,L) {
-  let activationValue = 0;
-  let lambda = 1/(1024*1024*1024);
-  activationValue = s * b * h *(2) * L * lambda;
-  return activationValue;
-}
+// // Tensor并行 + 序列并行
+// function getActivateValue(s,b,h,a,L,t) {
+//   let activationValue = 0;
+//   let lambda = 1/(1024*1024*1024);
+//   activationValue = s * b * h *(34 + 5 *a * s/h)/t * L * lambda;
+//   return activationValue;
+// }
+
+// // Tensor并行（基线）
+// function getActivateValue_0(s,b,h,a,L,t) {
+//   let activationValue = 0;
+//   let lambda = 1/(1024*1024*1024);
+//   activationValue = s * b * h *(10 + 24/t + 5 * a * s/h) * L * lambda;
+//   return activationValue;
+// }
+
+// // 选择重计算 + Tensor并行
+// function getActivateValue_0(s,b,h,a,L,t) {
+//   let activationValue = 0;
+//   let lambda = 1/(1024*1024*1024);
+//   activationValue = s * b * h *(10 + 24/t) * L * lambda;
+//   return activationValue;
+// }
+
+// // 选择冲计算 + Tensor并行 + 序列并行
+// function getActivateValue(s,b,h,a,L,t) {
+//   let activationValue = 0;
+//   let lambda = 1/(1024*1024*1024);
+//   activationValue = s * b * h *(34/t) * L * lambda;
+//   return activationValue;
+// }
+
+// // 全部重计算
+// function getActivateValue(s,b,h,L) {
+//   let activationValue = 0;
+//   let lambda = 1/(1024*1024*1024);
+//   activationValue = s * b * h *(2) * L * lambda;
+//   return activationValue;
+// }
 
 
 function calculateMemory(modelMemory, optimizerState, gradientValue, activationValue, tp_num, sp_num, pp_num) {
