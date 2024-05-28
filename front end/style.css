@@ -1,11 +1,14 @@
 body {
     font-family: sans-serif;
+    color: white;
     margin: 0;
     padding: 20px;
-    background-image: url('../images/code.jpg');
+    background-image: url('../images/plief.jpg');
     background-repeat: no-repeat;
     background-position: 0 0;
     background-attachment: fixed;
+    line-height: 20px;
+    background-size: cover;
   }
   
   .container {
@@ -14,24 +17,11 @@ body {
     /* text-align: center; */
   }
   
+  
   h1 {
     font-size: 24px;
     margin-bottom: 20px;
     text-align: center;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 5px;
-  }
-  
-  input[type="number"],
-  input[type="button"] {
-    width: 200px;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
   }
   
   #memory-result {
@@ -43,3 +33,74 @@ body {
     color: red;
   }
   
+  .checkbox-inline {
+    display: flex;
+    margin-right: 15px;
+  }
+  
+  /* 样式应用于选择框和其选项 */
+select {
+  width: 150px; /* 自动宽度 */
+}
+
+/* 可选：调整字体和间距以优化显示效果 */
+select {
+  font-size: 16px; /* 根据需要调整字体大小 */
+  padding: 5px; /* 调整内边距 */
+  border: 1px solid #ccc; /* 边框样式 */
+  border-radius: 4px; /* 圆角边框 */
+  box-sizing: border-box; /* 确保边框和内边距包含在总宽度内 */
+}
+
+
+table {
+  border-collapse: collapse; /* 合并表格边框 */
+  width: 500px; /* 设置表格宽度为100% */
+}
+
+/* 设置表格单元格的样式 */
+table td {
+  color: rgb(217, 184, 214);
+  font-size: 14px;
+  padding: 2px 4px; /* 缩减内边距 */
+  line-height: 1; /* 缩减行高 */
+  border: 1px solid #e48181; /* 添加边框 */
+}
+
+/* 调整输入框的样式 */
+input[type="number"] {
+  width: 150px; /* 设置输入框宽度为100% */
+  padding: 1px; /* 缩减内边距 */
+  box-sizing: border-box; /* 包含内边距和边框 */
+  font-size: 14px; /* 调整字体大小 */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+label {
+  font-size: 16px; /* 标签字体大小 */
+  font-weight: bold; /* 标签字体加粗 */
+  display: block; /* 标签块显示 */
+}
+
+#training-methods {
+  display: flex; /* 使用Flexbox布局 */
+  flex-wrap: wrap;
+}
+
+.checkbox-inline {
+  display: flex; /* 将复选框和文字设置在同一行 */
+  align-items: center; /* 垂直居中对齐 */
+}
+
+.checkbox-inline label {
+  color: rgb(217, 184, 214);
+  font-size: 16px; /* 复选框标签字体大小 */
+  font-weight: 400;
+  margin-right: 5px; /* 增加文字和复选框之间的间距 */
+}
+
+#training-methods input[type="number"] {
+  width: 50px;
+  height: 25px; /* 与复选框高度一致 */
+}

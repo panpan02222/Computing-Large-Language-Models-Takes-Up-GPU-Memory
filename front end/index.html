@@ -8,23 +8,101 @@
 </head>
 <body>
   <div class="container">
-    <h1>大语言模型显存计算器</h1>
+    <h1>大语言模型(<span style="color: red;">Transformer</span>)显存计算器</h1>
 
     <form id="memory-form">
-      <label for="dataType">参数类型:</label>
+      <label for="dataType">1.数据类型:</label>
       <select id="dataType" name="dataType">
-        <option value="FP32">FP32</option>
-        <option value="FP16">FP16</option>
-        <option value="BF16">BF16</option>
-        <option value="INT16">INT16</option>
-        <option value="INT8">INT8</option>
+        <option value="FP32">FP 32</option>
+        <option value="FP16" selected>FP 16</option>
+        <option value="BF16">BF 16</option>
+        <option value="INT16">INT 16</option>
+        <option value="INT8">INT 8</option>
       </select>
 
-      <label for="params">模型参数量(亿):</label>
-      <input type="number" id="params" name="params" min="0">
+      <label for="params">2.模型参数量:</label>
+      <input id="params" type="number" min="0" value="7"><span>Billion</span>
+      <br>
+
+      <label for="training-methods">3.训练方式<i><b>(训练模型时选择):</b></i></label>
+      <div id="training-methods" class="checkbox-container">
+        <span class="checkbox-inline">
+          <input type="checkbox" id="single" name="training-methods" value="Single">
+          <label for="single">单卡训练 </label> 
+        </span>
+        <span class="checkbox-inline">
+          <input type="checkbox" id="tp" name="training-methods" value="TP">
+          <label for="tp">Tensor并行</label>
+          <input id="tp-num" type="number" value="16">
+        </span>
+        <span class="checkbox-inline">
+          <input type="checkbox" id="sp" name="training-methods" value="SP">
+          <label for="sp">Sequence并行</label>
+          <input id="sp-num" type="number" value="8">
+        </span>
+        <span class="checkbox-inline">
+          <input type="checkbox" id="pp" name="training-methods" value="PP">
+          <label for="pp">Pipeline并行</label>
+          <input id="pp-num" type="number" value="16">
+        </span>
+        <span class="checkbox-inline">
+          <input type="checkbox" id="chongjisuan" name="training-methods" value="CJS">
+          <label for="chongjisuan">重计算</label>
+        </span>
+      </div>
+      
+      
+      <label for="training strategies">4.训练策略<i><b>(训练模型时选择):</b></i></label>
+      <select id="training strategies" name="training strategies">
+        <option value="non-selective">NON-USAGE</option>
+        <option value="SFT">SFT</option>
+        <option value="LORA">LoRA</option>
+        <option value="Q-LORA">Q-LoRA</option>
+        <option value="P-tuning v2">P-tuning v2</option>
+        <option value="Full-parameter" selected>Full-parameter</option>
+      </select>
+
+
+
+      <label for="optimizer">5.优化器<i><b>(训练模型时选择):</b></i></label>
+      <select id="optimizer" name="optimizer">
+        <option value="non-selective">NON-USAGE</option>
+        <option value="AdamW">AdamW</option>
+        <option value="Adam" selected>Adam</option>
+        <option value="SGD">SGD</option>
+        <option value="8-bit-opti">八位优化器(QFAD,DeepScale等)</option>
+        <option value="4-bit-opti">四位优化器(Four-bit AdamW, Integer Quantization for Neural Networks等)</option>
+      </select>
+      <br>
+
+      <label for="activation">6.模型配置<i><b>(训练模型时选择):</b></i></label>
+      <table>
+        <tr>
+          <td>Sequence Length:</td>
+          <td><input id="sequence-length" type="number" min="0" value="2048"></td>
+        </tr>
+        <tr>
+          <td>Batch Size:</td>
+          <td><input id="batchsize" type="number" min="0" value="32"></td>
+        </tr>
+        <tr>
+          <td>Hidden Size:</td>
+          <td><input id="hidden-size" type="number" min="0" value="4096"></td>
+        </tr>
+        <tr>
+          <td>Number of Attention Heads:</td>
+          <td><input id="attention-heads" type="number" min="0" value="32"></td>
+        </tr>
+        <tr>
+          <td>Transformer Layers:</td>
+          <td><input id="transformer-layers" type="number" min="0" value="32"></td>
+        </tr>
+      </table>
       <br>
       <button type="button" id="calculate-button">开始计算</button>
     </form>
+
+
 
     <div id="memory-result">
       <p><b>预估显存使用量: </b><span id="memory-value">0</span> </p>
